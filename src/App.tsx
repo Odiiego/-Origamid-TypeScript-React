@@ -1,39 +1,63 @@
-import React from 'react'
-import Input from './Input'
+import React from 'react';
+import videoSrc from './video.mp4';
 
-type Venda = {
-  id: string;
-  nome:string;
-  preco: number;
-  status: string
-}
+function App() {
+  const video = React.useRef<HTMLVideoElement>(null);
 
- const App = () => {
-  const [start, setStart] = React.useState("")
-  const [end, setEnd] = React.useState("")
-  const [data, setData] = React.useState<null | Venda[]>(null)
+  const [playing, setPlaying] = React.useState(false);
 
-  React.useEffect(() => {
-    if (start !== '' && end !== "") {
-      fetch(`https://data.origamid.dev/vendas/?inicio=${start}&final=${end}`)
-        .then((r) => r.json())
-        .then((json) => setData(json as Venda[]))
-        .catch((error) => console.log(error))
+  function forward() {
+    if (!video.current) return;
+    video.current.currentTime += 2;
+  }
+
+  function changePlaybackRate(speed: number) {
+    if (!video.current) return;
+    video.current.playbackRate = speed;
+  }
+
+  function mute() {
+    if (!video.current) return;
+    video.current.muted = !video.current.muted;
+  }
+
+  async function pictureInPicture() {
+    if (!video.current) return;
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture();
+    } else {
+      await video.current.requestPictureInPicture();
     }
-  }, [start, end])
+  }
 
   return (
     <div>
-      <div>
-        <Input label="start" type="date" value={start} setState={setStart} />
-        <Input label="end" type="date" value={end} setState={setEnd} />
+      <div className="flex">
+        {playing ? (
+          <button onClick={() => video.current?.pause()}>Pause</button>
+        ) : (
+          <button onClick={() => video.current?.play()}>Play</button>
+        )}
+        <button onClick={() => forward()}>+ 2s</button>
+        <button onClick={() => changePlaybackRate(1)}>1x</button>
+        <button onClick={() => changePlaybackRate(2)}>2x</button>
+        <button onClick={() => mute()}>M</button>
+        <button onClick={() => pictureInPicture()}>PiP</button>
       </div>
-      
-      <ul>
-        {data && data.map(venda => <li key={venda.id}>{venda.nome}: {venda.status}</li>)}
-      </ul>
+      <video
+        width={'600px'}
+        controls
+        ref={video}
+        src={videoSrc}
+        onPlay={() => {
+          setPlaying(true);
+        }}
+        onPause={() => {
+          setPlaying(false);
+        }}
+      ></video>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
