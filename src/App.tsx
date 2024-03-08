@@ -1,63 +1,44 @@
 import React from 'react';
-import videoSrc from './video.mp4';
+import useFetch from './useFetch';
 
-function App() {
-  const video = React.useRef<HTMLVideoElement>(null);
+type Produto = {
+  id: string;
+  nome: string;
+  preco: number;
+  quantidade: number;
+  descricao: string;
+  internacional: boolean;
+};
 
-  const [playing, setPlaying] = React.useState(false);
-
-  function forward() {
-    if (!video.current) return;
-    video.current.currentTime += 2;
-  }
-
-  function changePlaybackRate(speed: number) {
-    if (!video.current) return;
-    video.current.playbackRate = speed;
-  }
-
-  function mute() {
-    if (!video.current) return;
-    video.current.muted = !video.current.muted;
-  }
-
-  async function pictureInPicture() {
-    if (!video.current) return;
-    if (document.pictureInPictureElement) {
-      await document.exitPictureInPicture();
-    } else {
-      await video.current.requestPictureInPicture();
-    }
-  }
+const App = () => {
+  const [id, setId] = React.useState('P001');
+  const produtos = useFetch<Produto[]>('https://data.origamid.dev/produtos/');
+  const produto = useFetch<Produto>(`https://data.origamid.dev/produtos/${id}`);
 
   return (
-    <div>
-      <div className="flex">
-        {playing ? (
-          <button onClick={() => video.current?.pause()}>Pause</button>
-        ) : (
-          <button onClick={() => video.current?.play()}>Play</button>
-        )}
-        <button onClick={() => forward()}>+ 2s</button>
-        <button onClick={() => changePlaybackRate(1)}>1x</button>
-        <button onClick={() => changePlaybackRate(2)}>2x</button>
-        <button onClick={() => mute()}>M</button>
-        <button onClick={() => pictureInPicture()}>PiP</button>
-      </div>
-      <video
-        width={'600px'}
-        controls
-        ref={video}
-        src={videoSrc}
-        onPlay={() => {
-          setPlaying(true);
-        }}
-        onPause={() => {
-          setPlaying(false);
-        }}
-      ></video>
-    </div>
+    <section className="flex">
+      <ul>
+        {produtos.data?.map((produto: Produto) => {
+          return (
+            <li>
+              <button onClick={() => setId(produto.id)}>{produto.id}</button>
+            </li>
+          );
+        })}
+      </ul>
+      {produto.loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div style={{ margin: '1rem' }}>
+          <p>ID: {produto.data?.id}</p>
+          <p>Nome: {produto.data?.nome}</p>
+          <p>Preço: R${produto.data?.preco}</p>
+          <p>Quantidade: {produto.data?.quantidade}</p>
+          <p>Descrição: {produto.data?.descricao}</p>
+        </div>
+      )}
+    </section>
   );
-}
+};
 
 export default App;
